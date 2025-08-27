@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    /* Basic Options */
+    "target": "es6", // Compila para uma versão de JavaScript mais moderna (ES6).
+    "module": "commonjs", // Usa o sistema de módulos que o Node.js entende.
+    "allowJs": true, // Permite que arquivos .js (como seu Player.js) sejam compilados.
+    "outDir": "./dist", // Coloca todos os arquivos compilados na pasta 'dist'.
+    "rootDir": "./src", // Indica que a pasta 'src' é a raiz do seu código-fonte.
+
+    /* Strict Type-Checking Options */
+    "strict": true, // Habilita todas as checagens de tipo estritas.
+
+    /* Module Resolution Options */
+    "esModuleInterop": true, // Melhora a compatibilidade ao importar módulos.
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"] // Diz ao compilador para incluir todos os arquivos dentro da pasta 'src'.
+}

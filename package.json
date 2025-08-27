@@ -2,10 +2,10 @@
   "name": "third-person-game",
   "version": "1.0.0",
   "description": "A third-person game inspired by MUCK.",
-  "main": "src/game/Game.ts",
+  "main": "dist/game/Game.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/app.js",
+    "start": "tsc && node dist/game/Game.js",
     "dev": "ts-node src/game/Game.ts"
   },
   "dependencies": {

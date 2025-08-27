@@ -11,8 +11,10 @@ export class Game {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
 
+    this.clock = new THREE.Clock();
+
     this.world = new World(this.scene);
-    this.player = new Player(this.scene, this.world.getTreeGenerator());
+    this.player = new Player(this.scene, this.world);
     this.camera = new ThirdPersonCamera(this.player);
     this.ui = new UI(this.player);
 
@@ -44,7 +46,9 @@ export class Game {
   animate() {
     requestAnimationFrame(() => this.animate());
 
-    this.player.update();
+    const deltaTime = this.clock.getDelta() * 1000;
+
+    this.player.update(deltaTime);
     this.camera.update();
     this.world.update();
     this.ui.update();

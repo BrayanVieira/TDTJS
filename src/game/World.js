@@ -1,17 +1,48 @@
 import * as THREE from "three";
-import { TreeGenerator } from "./Objects.js";
+import { TreeGenerator, RockGenerator } from "./Objects.js";
 
 export class World {
   constructor(scene) {
     this.scene = scene;
     this.treeGenerator = new TreeGenerator(this.scene);
+    this.rockGenerator = new RockGenerator(this.scene);
+    this.colliders = [];
+    this.objectPositions = [];
+
+    // Reserve player spawn area
+    this.objectPositions.push({ x: 0, z: 0, radius: 5 });
+
     this.loadTextures();
     this.createTrees();
+    this.createRocksAndOres();
+
+    this.colliders = [
+      ...this.treeGenerator.getColliders(),
+      ...this.rockGenerator.getColliders(),
+    ];
   }
 
-  // Add method to get tree generator
-  getTreeGenerator() {
-    return this.treeGenerator;
+  getColliders() {
+    return this.colliders;
+  }
+
+  removeObject(object) {
+    if (!object) return;
+
+    this.scene.remove(object.mesh);
+    const index = this.colliders.indexOf(object);
+    if (index > -1) {
+      this.colliders.splice(index, 1);
+    }
+  }
+
+  isTooClose(x, z, minDistance) {
+    return this.objectPositions.some((pos) => {
+      const dx = pos.x - x;
+      const dz = pos.z - z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      return distance < (pos.radius + minDistance);
+    });
   }
 
   loadTextures() {
@@ -73,24 +104,12 @@ export class World {
   }
 
   createTrees() {
-    const treeGenerator = new TreeGenerator(this.scene);
-
-    // Reduced numbers for trees
     const worldSize = 50;
-    const numberOfLargeTrees = 12; // Reduced from 20
-    const numberOfMediumTrees = 18; // Reduced from 30
-    const minDistance = 4; // Increased minimum distance
-    const numberOfClusters = 3; // Reduced from 5
-
-    const treePositions = [];
-
-    const isTooClose = (x, z) => {
-      return treePositions.some((pos) => {
-        const dx = pos.x - x;
-        const dz = pos.z - z;
-        return Math.sqrt(dx * dx + dz * dz) < minDistance;
-      });
-    };
+    const numberOfLargeTrees = 12;
+    const numberOfMediumTrees = 18;
+    const minDistance = 4;
+    const treeRadius = 2.5;
+    const numberOfClusters = 3;
 
     // Generate large trees
     for (let i = 0; i < numberOfLargeTrees; i++) {
@@ -98,10 +117,10 @@ export class World {
       do {
         x = (Math.random() - 0.5) * worldSize;
         z = (Math.random() - 0.5) * worldSize;
-      } while (isTooClose(x, z));
+      } while (this.isTooClose(x, z, minDistance));
 
-      treePositions.push({ x, z });
-      treeGenerator.createLargeTree(x, z);
+      this.objectPositions.push({ x, z, radius: treeRadius });
+      this.treeGenerator.createLargeTree(new THREE.Vector3(x, 0, z));
     }
 
     // Generate medium trees
@@ -110,10 +129,10 @@ export class World {
       do {
         x = (Math.random() - 0.5) * worldSize;
         z = (Math.random() - 0.5) * worldSize;
-      } while (isTooClose(x, z));
+      } while (this.isTooClose(x, z, minDistance));
 
-      treePositions.push({ x, z });
-      treeGenerator.createMediumTree(x, z);
+      this.objectPositions.push({ x, z, radius: treeRadius });
+      this.treeGenerator.createTree(new THREE.Vector3(x, 0, z));
     }
 
     // Create smaller number of clusters
@@ -121,7 +140,6 @@ export class World {
       const clusterX = (Math.random() - 0.5) * worldSize;
       const clusterZ = (Math.random() - 0.5) * worldSize;
 
-      // Reduced trees per cluster (2-3 instead of 3-5)
       const treesInCluster = Math.floor(Math.random() * 2) + 2;
 
       for (let j = 0; j < treesInCluster; j++) {
@@ -129,15 +147,60 @@ export class World {
         const x = clusterX + (Math.random() - 0.5) * offset;
         const z = clusterZ + (Math.random() - 0.5) * offset;
 
-        if (!isTooClose(x, z)) {
-          treePositions.push({ x, z });
+        if (!this.isTooClose(x, z, minDistance)) {
+          this.objectPositions.push({ x, z, radius: treeRadius });
           if (Math.random() > 0.5) {
-            treeGenerator.createLargeTree(x, z);
+            this.treeGenerator.createLargeTree(new THREE.Vector3(x, 0, z));
           } else {
-            treeGenerator.createMediumTree(x, z);
+            this.treeGenerator.createTree(new THREE.Vector3(x, 0, z));
           }
         }
       }
+    }
+  }
+
+  createRocksAndOres() {
+    const worldSize = 50;
+    const numberOfRocks = 15;
+    const numberOfIron = 8;
+    const numberOfGold = 4;
+    const minDistance = 3;
+    const rockRadius = 1.5;
+
+    // Generate Rocks
+    for (let i = 0; i < numberOfRocks; i++) {
+      let x, z;
+      do {
+        x = (Math.random() - 0.5) * worldSize;
+        z = (Math.random() - 0.5) * worldSize;
+      } while (this.isTooClose(x, z, minDistance));
+
+      this.objectPositions.push({ x, z, radius: rockRadius });
+      this.rockGenerator.createRock(new THREE.Vector3(x, 0, z));
+    }
+
+    // Generate Iron
+    for (let i = 0; i < numberOfIron; i++) {
+      let x, z;
+      do {
+        x = (Math.random() - 0.5) * worldSize;
+        z = (Math.random() - 0.5) * worldSize;
+      } while (this.isTooClose(x, z, minDistance));
+
+      this.objectPositions.push({ x, z, radius: rockRadius });
+      this.rockGenerator.createIronVein(new THREE.Vector3(x, 0, z));
+    }
+
+    // Generate Gold
+    for (let i = 0; i < numberOfGold; i++) {
+      let x, z;
+      do {
+        x = (Math.random() - 0.5) * worldSize;
+        z = (Math.random() - 0.5) * worldSize;
+      } while (this.isTooClose(x, z, minDistance));
+
+      this.objectPositions.push({ x, z, radius: rockRadius });
+      this.rockGenerator.createGoldVein(new THREE.Vector3(x, 0, z));
     }
   }
 
